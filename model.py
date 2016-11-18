@@ -5,11 +5,12 @@ from keras.layers import merge
 
 class WavenetModel:
     def __init__(self,
-                 filename="model.h5",
                  numBlocks=2,
                  numLayers=8,
                  numFilters=32,
                  filterSize=2,
+                 # I'm honestly not sure what frame size
+                 # should actually be...
                  frameSize=2048):
         self.numBlocks = numBlocks
         self.numLayers = numLayers
@@ -68,10 +69,13 @@ class WavenetModel:
 
     def train(self, data, save=True):
         self.model.fit_generator(data, samples_per_epoch=2000, nb_epoch=1000)
-        if save: self.model.save(self.filename)
 
-    def load(self):
-        self.model = load_model(self.filename)
+    def save(self, filename):
+        self.model.save(filename)
+
+    def load(self, filename):
+        self.model = load_model(filename)
+        self.filename = filename
 
 # 2.5: Conditional wavenets
 class ConditionedWavenetModel(WavenetModel):
@@ -79,4 +83,8 @@ class ConditionedWavenetModel(WavenetModel):
 
 if __name__=="__main__":
     model = WavenetModel()
-
+    # To train model on new data:
+    #   model.train(data)
+    #   model.save("model.h5")
+    # To load model from file:
+    #   model.load("model.h5")
