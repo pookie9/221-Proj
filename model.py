@@ -12,13 +12,13 @@ class WavenetModel:
                  numLayers=8,
                  numFilters=32,
                  filterSize=2,
-                 chunkSize=2048):
+                 frameSize=256):
         self.data = data
         self.numBlocks = numBlocks
         self.numLayers = numLayers
         self.numFilters = numFilters
         self.filterSize = filterSize
-        self.chunkSize = chunkSize
+        self.frameSize = frameSize
         self.model = self._getKerasModel()
 
     # 2.3: Unit activation function
@@ -45,7 +45,7 @@ class WavenetModel:
     # Returns a Keras Model with appropriate convolution layers.
     # I kinda just follow what the figure looks like in Section 2.4
     def _getKerasModel(self):
-        input_ = Input(shape=(self.chunkSize, 1))
+        input_ = Input(shape=(self.frameSize, 1))
         # TODO (sydli): Initial convolution?
         residual = input_
 
@@ -61,11 +61,15 @@ class WavenetModel:
         result = Activation('relu')(result)
         result = Convolution1D(1, 1, activation='relu', border_mode='same')(result)
         result = Convolution1D(1, 1, border_mode='same')(result)
-        result = Activation('softmax')(result)
+
+        # I saw someone else do this to flatten the dimensionality => 256 values :D
+        # Smart shit
+        result = Flatten()(result)
+        result = Dense(256, activation='softmax')(result)
 
         model = Model(input=input_, output=result)
         # TODO (sydli): What do we use for loss here??
-        model.compile(optimizer='sgd', loss='mse')
+        model.compile(optimizer='sgd', loss='categorical_crossentropy')
         model.summary()
         return model
 
@@ -74,6 +78,20 @@ class WavenetModel:
         print "Training on data..."
         self.model.fit(X, y)
         print "Finished Training on data!"
+
+    def generate(numSamples):
+        seed = self.data.getSeed()
+        samples = seed
+        i = 0
+        while len(samples) < numSamples:
+            input_ = samples[i:i+self.frameSize]
+            result = self.model.predict(input_)
+            result /= result.sum().astype(float) # normalize
+            sample = np.random.choice(range(256), result)
+            # TODO (sydli): reconstruct audio signal from discretized sample
+            samples.append(sample)
+            i += 1
+        return samples
 
     def save(self, filename):
         self.model.save(filename)
@@ -88,12 +106,11 @@ class ConditionedWavenetModel(WavenetModel):
     pass
 
 if __name__=="__main__":
-    data = AudioData(sampleRate=8000, frameSize=2048, frameShift=12, filename="piano.wav")
+    data = AudioData(sampleRate=8000, frameSize=256, frameShift=2, filename="piano.wav")
     model = WavenetModel(data)
     model.train()
     model.save("model.h5")
-    # To train model on new data:
-    #   model.train(data)
-    #   model.save("model.h5")
-    # To load model from file:
-    #   model.load("model.h5")
+
+    generated = model.generate(32000)
+    with open("generated", "rw+") as f:
+        for item in generated: f.write("%s\n" % item)
