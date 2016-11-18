@@ -1,6 +1,6 @@
 from keras.models import Model
 from keras.models import load_model
-from keras.layers import Convolution1D, AtrousConvolution1D, Input
+from keras.layers import Convolution1D, AtrousConvolution1D, Input, Activation, Dense, Flatten
 from keras.layers import merge
 
 from data import AudioData
@@ -26,10 +26,12 @@ class WavenetModel:
         tanh = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
+                                 border_mode='same',
                                  activation='tanh')
         sigm = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
+                                 border_mode='same',
                                  activation='sigmoid')
         return merge([tanh(data), sigm(data)], mode='mul')
 
@@ -44,10 +46,8 @@ class WavenetModel:
     # I kinda just follow what the figure looks like in Section 2.4
     def _getKerasModel(self):
         input_ = Input(shape=(self.chunkSize, 1))
-        # Initial convolution (what the eff is a causal convolution?):
-        residual = AtrousConvolution1D(self.numFilters,
-                                self.filterSize,
-                                atrous_rate=1)(input_)
+        # TODO (sydli): Initial convolution?
+        residual = input_
 
         # Convolutional layers: calculating residual blocks
         skips = [residual]
@@ -59,20 +59,20 @@ class WavenetModel:
         #   SUM => RELU => 1x1 CONV => RELU => 1x1 CONV => SOFTMAX
         result = merge(skips, mode='sum')
         result = Activation('relu')(result)
-        result = Convolution1D(1, 1, activation='relu')
-        result = Convolution1D(1, 1)
+        result = Convolution1D(1, 1, activation='relu', border_mode='same')(result)
+        result = Convolution1D(1, 1, border_mode='same')(result)
         result = Activation('softmax')(result)
 
         model = Model(input=input_, output=result)
         # TODO (sydli): What do we use for loss here??
         model.compile(optimizer='sgd', loss='mse')
-        modal.summary()
+        model.summary()
         return model
 
     def train(self, save=True):
         X, y = self.data.get()
         print "Training on data..."
-        self.model.fit(X, y, samples_per_epoch=2000, nb_epoch=1000)
+        self.model.fit(X, y)
         print "Finished Training on data!"
 
     def save(self, filename):
