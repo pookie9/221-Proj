@@ -100,17 +100,7 @@ class WavenetModel:
         self.model = load_model(filename)
         self.filename = filename
 
-# 2.5: Conditional wavenets-- we can condition globally on things like
-#      speaker identity, or locally on things like phonemes.
+# 2.5: TODO (sydli): Conditional wavenets-- we can condition globally on things
+#      like speaker identity, or locally on things like phonemes.
 class ConditionedWavenetModel(WavenetModel):
     pass
-
-if __name__=="__main__":
-    data = AudioData(sampleRate=8000, frameSize=256, frameShift=2, filename="piano.wav")
-    model = WavenetModel(data)
-    model.train()
-    model.save("model.h5")
-
-    generated = model.generate(32000)
-    with open("generated", "rw+") as f:
-        for item in generated: f.write("%s\n" % item)
