@@ -5,16 +5,31 @@ from keras.layers import merge
 
 from data import AudioData
 
+# Wrapper around conv neural net constructed after wavenet paper.
+# uses Keras primitives.
 class WavenetModel:
+    # Usage:
+    #   data          An AudioData object initialized with training audio data
+    #   numLayers     The number of dilated convolution layers in our model.
+    #   numFilters    The number of filters to apply per layer. Affects
+    #                 dimensionality of hidden layer outputs.
+    #   filterSize    The size of a filter's spatial "neighborhood".
+    # 
+    #   train() /  generate()
+    #     train the Keras model on the supplied data, then generate
+    #     a number of samples using the trained model weights.
+    #   save() / load()
+    #     push/pull models to/from disk.
+
     def __init__(self,
                  data,
-                 numBlocks=2,
                  numLayers=8,
                  numFilters=32,
                  filterSize=2,
+                 # TODO (sydli): Calculate frame size + shift from 
+                 # receptive field so we don't do unnecessary computation
                  frameSize=256):
         self.data = data
-        self.numBlocks = numBlocks
         self.numLayers = numLayers
         self.numFilters = numFilters
         self.filterSize = filterSize
@@ -73,12 +88,16 @@ class WavenetModel:
         model.summary()
         return model
 
-    def train(self, save=True):
+    ######## Public member functions
+
+    # Train this model on supplied data object.
+    def train(self):
         X, y = self.data.get()
         print "Training on data..."
         self.model.fit(X, y)
         print "Finished Training on data!"
 
+    # Generate |numSamples| from trained model.
     def generate(numSamples):
         seed = self.data.getSeed()
         samples = seed
@@ -93,9 +112,11 @@ class WavenetModel:
             i += 1
         return samples
 
+    # Saves model to filename.
     def save(self, filename):
         self.model.save(filename)
 
+    # Loads model from filename.
     def load(self, filename):
         self.model = load_model(filename)
         self.filename = filename
