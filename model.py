@@ -3,6 +3,8 @@ from keras.models import load_model
 from keras.layers import Convolution1D, AtrousConvolution1D, Input, Activation, Dense, Flatten
 from keras.layers import merge
 
+import numpy as np
+
 from data import AudioData
 
 # Wrapper around conv neural net constructed after wavenet paper.
@@ -23,12 +25,12 @@ class WavenetModel:
 
     def __init__(self,
                  data,
-                 numLayers=8,
+                 numLayers=6,
                  numFilters=32,
                  filterSize=2,
                  # TODO (sydli): Calculate frame size + shift from 
                  # receptive field so we don't do unnecessary computation
-                 frameSize=256):
+                 frameSize=64):
         self.data = data
         self.numLayers = numLayers
         self.numFilters = numFilters
@@ -98,17 +100,20 @@ class WavenetModel:
         print "Finished Training on data!"
 
     # Generate |numSamples| from trained model.
-    def generate(numSamples):
+    def generate(self, numSamples):
         seed = self.data.getSeed()
-        samples = seed
+        samples = list(seed)
         i = 0
         while len(samples) < numSamples:
-            input_ = samples[i:i+self.frameSize]
+            input_ = np.asarray(samples[i:i+self.frameSize]).reshape((1, self.frameSize, 1))
             result = self.model.predict(input_)
             result /= result.sum().astype(float) # normalize
-            sample = np.random.choice(range(256), result)
+            result = result.reshape(256)
+            sample = np.random.choice(range(256), p=result)
+            print sample
             # TODO (sydli): reconstruct audio signal from discretized sample
             samples.append(sample)
+            print i
             i += 1
         return samples
 

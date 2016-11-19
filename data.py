@@ -1,5 +1,6 @@
 import librosa
 import numpy as np
+import random
 import os
 
 class AudioData:
@@ -39,6 +40,7 @@ class AudioData:
         if self.training is not None:
             return self.training, self.targets
         audio = self._loadAudio()
+        audio = audio[0:len(audio)/2]
         # TODO (sydli): Normalize audio!
         training = []
         targets = []
@@ -56,7 +58,8 @@ class AudioData:
 
     def getSeed(self):
         self.get()
-        return self.training[0]
+        i = random.randint(0, len(self.training)-1)
+        return self.training[i]
 
 if __name__=="__main__":
     data = AudioData(sampleRate=8000, frameSize=2048, frameShift=128, filename="piano.wav")
