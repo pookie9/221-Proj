@@ -3,7 +3,7 @@ from data import AudioData
 
 if __name__=="__main__":
     data = AudioData(sampleRate=8000, frameSize=64, frameShift=2, filename="piano.wav")
-    model = WavenetModel(data)
+    model = WavenetModel(data, frameSize=64)
     model.load("model.h5")
     # model.train()
     # model.save("model.h5")

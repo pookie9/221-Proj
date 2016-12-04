@@ -3,6 +3,8 @@ import numpy as np
 import random
 import os
 
+import util
+
 class AudioData:
     def __init__(self,
                  sampleRate,
@@ -34,6 +36,12 @@ class AudioData:
             fileAudio, _ = librosa.load(filename, sr=self.sampleRate, mono=True)
             audio = fileAudio
         print "Finished loading audio."
+
+        # normalize
+        audio = audio.astype(float)
+        audio = audio - audio.min()
+        audio = audio / (audio.max() - audio.min())
+        audio = (audio - 0.5) * 2
         return audio
 
     def get(self):
@@ -41,15 +49,14 @@ class AudioData:
             return self.training, self.targets
         audio = self._loadAudio()
         audio = audio[0:len(audio)/2]
-        # TODO (sydli): Normalize audio!
         training = []
         targets = []
         eye = np.eye(256)
         for i in range(0, len(audio) - self.frameSize - 1, self.frameShift):
             slice_ = audio[i:i + self.frameSize]
-            # Quantize target according to part 2.2
             target = audio[i + self.frameSize + 1]
-            target = int(np.sign(target) * (np.log(1 + 255*abs(target)) / np.log(1+255)))
+            # Quantize target according to part 2.2
+            target = util.mulaw(target)
             training.append(slice_.reshape(self.frameSize, 1))
             targets.append(eye[target])
         self.training = np.asarray(training)

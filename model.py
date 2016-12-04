@@ -3,9 +3,11 @@ from keras.models import load_model
 from keras.layers import Convolution1D, AtrousConvolution1D, Input, Activation, Dense, Flatten
 from keras.layers import merge
 
+import librosa
 import numpy as np
 
 from data import AudioData
+import util
 
 # Wrapper around conv neural net constructed after wavenet paper.
 # uses Keras primitives.
@@ -100,9 +102,11 @@ class WavenetModel:
         print "Finished Training on data!"
 
     # Generate |numSamples| from trained model.
-    def generate(self, numSamples):
+    def generate(self, numSamples, filename="generated.wav"):
         seed = self.data.getSeed()
-        samples = list(seed)
+        # Unroll samples (for some reason it's 2d array.. should probably debug)
+        samples = list([s[0] for s in seed]) 
+        print samples
         i = 0
         while len(samples) < numSamples:
             input_ = np.asarray(samples[i:i+self.frameSize]).reshape((1, self.frameSize, 1))
@@ -110,11 +114,10 @@ class WavenetModel:
             result /= result.sum().astype(float) # normalize
             result = result.reshape(256)
             sample = np.random.choice(range(256), p=result)
-            print sample
-            # TODO (sydli): reconstruct audio signal from discretized sample
-            samples.append(sample)
-            print i
+            samples.append(util.inverse_mulaw(sample))
             i += 1
+        print "Writing to wav..."
+        librosa.output.write_wav(filename, np.asarray(samples), self.data.sampleRate)
         return samples
 
     # Saves model to filename.
