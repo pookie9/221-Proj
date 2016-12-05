@@ -1,10 +1,9 @@
 from model import WavenetModel
-from data import AudioData
+from data import *
 
 if __name__=="__main__":
-    data = AudioData(sampleRate=8000, frameSize=2000, frameShift=2, filename="piano.wav")
-#    data = AudioData(sampleRate=8000, frameSize=64, frameShift=2, filename="orchestra.wav")
-    model = WavenetModel(data, frameSize=2000)
+    data = AudioCollection(8000, 2048, 128, ["piano.wav","orchestra.wav"],[1,0])
+    model = ConditionedWavenetModel(data, frameSize=64)
     model.train()
     model.save("model.h5")
     model.load("model.h5")

@@ -98,7 +98,7 @@ class WavenetModel:
     def train(self):
         X, y = self.data.get()
         print "Training on data..."
-        self.model.fit(X, y)
+        self.model.fit(X, y,nb_epoch=1)
         print "Finished Training on data!"
 
     # Generate |numSamples| from trained model.
@@ -132,4 +132,30 @@ class WavenetModel:
 # 2.5: TODO (sydli): Conditional wavenets-- we can condition globally on things
 #      like speaker identity, or locally on things like phonemes.
 class ConditionedWavenetModel(WavenetModel):
-    pass
+    
+    def __init__(self,
+                 data,
+                 speakers,
+                 numLayers=6,
+                 numFilters=32,
+                 filterSize=2,
+                 # TODO (sydli): Calculate frame size + shift from 
+                 # receptive field so we don't do unnecessary computation
+                 frameSize=64):
+        self.speakers = speakers
+        super(WavenetModel,self).__init__(data, numLayers,numFilters,filterSize)
+        print type(self.data)
+        exit(1)
+    def _activation(self, data, dilation):
+        tanh = AtrousConvolution1D(self.numFilters,
+                                 self.filterSize,
+                                 atrous_rate=dilation,
+                                 border_mode='same',
+                                 activation='tanh')
+        sigm = AtrousConvolution1D(self.numFilters,
+                                 self.filterSize,
+                                 atrous_rate=dilation,
+                                 border_mode='same',
+                                 activation='sigmoid')
+        return merge([tanh(data), sigm(data)], mode='mul')
+
