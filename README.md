@@ -8,16 +8,30 @@ In order to generate speech from text, we must first label the the training audi
 We are using pocketsphinx, part of the Sphinx project developed at CMU in order to generate a time stamped phoneme. 
 
 ##Installing Sphinx
-1. Update Brew 
+Update Brew 
 ```
 brew update
 ```
-2. Use the following tap (following instructions on http://www.moreiscode.com/getting-started-with-cmu-sphinx-on-mac-os-x/)
+Use the following tap (following instructions on http://www.moreiscode.com/getting-started-with-cmu-sphinx-on-mac-os-x/)
 ```
 brew tap watsonbox/cmu-sphinx
 ```
-3. Install both sphinxbase and pocketsphinx
+Install both sphinxbase and pocketsphinx
 ```
 brew install --HEAD watsonbox/cmu-sphinx/cmu-sphinxbase
 brew install --HEAD watsonbox/cmu-sphinx/cmu-pocketsphinx
+```
+
+Now you should be able to run pocketsphinx to transcribe wav files
+
+```
+pocketsphinx_continuous -infile sample.wav
+```
+
+For the full manual on pocketsphinx_continous, see this site:
+http://manpages.org/pocketsphinx_continuous
+
+To test time-stamped phoneme labels without specifying language models:
+```
+pocketsphinx_continuous -logfn log.txt -time yes -allphone -infile sample.wav
 ```
