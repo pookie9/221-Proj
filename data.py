@@ -62,8 +62,6 @@ class AudioData(object):
         return np.asarray(training), np.asarray(targets)
 
     def getGenerator(self):
-        if self.training is not None:
-            return self.training, self.targets
         audio = self._loadAudio()
         training = []
         targets = []
@@ -77,7 +75,6 @@ class AudioData(object):
             #targets.append(target)# eye[target])
         # self.training = np.asarray(training)
         # self.targets = np.asarray(targets)
-        # return np.asarray(training), np.asarray(targets)
 
     def getSeed(self):
         self.get()
