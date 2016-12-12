@@ -104,12 +104,9 @@ class WavenetModel:
     def train(self):
         X, y = self.data.get()
         print "Training on data..."
-<<<<<<< HEAD
-        checkpoint = ModelCheckpoint(filepath="checkpoint.hdf5", verbose=1, save_best_only=True)
+        checkpoint = ModelCheckpoint(filepath="weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+                verbose=1, save_best_only=False, save_weights_only=False, mode='auto')
         self.model.fit(X, y, nb_epoch=1, callbacks=[checkpoint])
-=======
-        self.model.fit(X, y,nb_epoch=1)
->>>>>>> 9295a04456d8880d4d1c3f80675489e9c2d1056a
         print "Finished Training on data!"
 
     # Generate |numSeconds| from trained model.
