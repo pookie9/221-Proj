@@ -29,12 +29,14 @@ class WavenetModel:
     #     push/pull models to/from disk.
     def __init__(self,
                  data,
+                 numEpochs=1000,
                  numLayers=6,
                  numFilters=16,
                  filterSize=2):
                  # TODO (sydli): Calculate frame size + shift from 
                  # receptive field so we don't do unnecessary computation
         self.data = data
+        self.numEpochs = numEpochs
         self.numLayers = numLayers
         self.numFilters = numFilters
         self.filterSize = filterSize
@@ -104,7 +106,10 @@ class WavenetModel:
         print "Training on data..."
         checkpoint = ModelCheckpoint(filepath="weights.{epoch:02d}-{val_loss:.2f}.hdf5",
                 verbose=1, save_best_only=False, save_weights_only=False, mode='auto')
-        self.model.fit(X, y, nb_epoch=1, callbacks=[checkpoint])
+        self.model.fit_generator(self.data.getGenerator(),
+                samples_per_epoch=25000,
+                nb_epoch=self.numEpochs,
+                callbacks=[checkpoint])
         print "Finished Training on data!"
 
     # Generate |numSeconds| from trained model.
