@@ -77,9 +77,11 @@ class AudioData(object):
         # eye = np.eye(256)
         while True:
             for i in range(0, len(audio) - self.frameSize - 1, self.frameShift):
-                slice_ = audio[i:i + self.frameSize]
-                target = audio[i + self.frameSize + 1]
-                yield slice_.shape(self.frameSize, 256), target
+                slice_ = np.asarray([util.mulaw(a) for a in audio[i:i + self.frameSize]])
+                slice_ = slice_.reshape(1, self.frameSize, 256)
+                print sum(slice_[0][0])
+                target = np.asarray(util.mulaw(audio[i + self.frameSize + 1])).reshape(1, 256)
+                yield slice_.reshape(1, self.frameSize, 256), target
             # training.append(slice_.reshape(self.frameSize, 256))
             #targets.append(target)# eye[target])
         # self.training = np.asarray(training)

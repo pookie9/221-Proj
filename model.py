@@ -107,7 +107,7 @@ class WavenetModel:
         checkpoint = ModelCheckpoint(filepath="weights.{epoch:02d}-{val_loss:.2f}.hdf5",
                 verbose=1, save_best_only=False, save_weights_only=False, mode='auto')
         self.model.fit_generator(self.data.getGenerator(),
-                samples_per_epoch=25000,
+                samples_per_epoch=5000,
                 nb_epoch=self.numEpochs,
                 callbacks=[checkpoint])
         print "Finished Training on data!"
