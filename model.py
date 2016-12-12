@@ -92,7 +92,7 @@ class WavenetModel:
 
         model = Model(input=input_, output=result)
         model.compile(optimizer='sgd', loss='categorical_crossentropy',
-                metrics = [metrics.categorical_mean_squared_error])
+                metrics = [metrics.mean_squared_error, metrics.categorical_accuracy])
         model.summary()
         return model
 
