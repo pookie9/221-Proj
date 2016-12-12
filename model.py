@@ -46,14 +46,12 @@ class WavenetModel:
         tanh = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
-                                 border_mode='valid',
-                                 causal=True,
+                                 border_mode='same',
                                  activation='tanh')(data)
         sigm = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
-                                 border_mode='valid',
-                                 causal=True,
+                                 border_mode='same',
                                  activation='sigmoid')(data)
         return merge([tanh, sigm], mode='mul')
 
@@ -70,7 +68,7 @@ class WavenetModel:
         input_ = Input(shape=(self.frameSize, 256))
         residual = input_
         print residual
-        residual = AtrousConvolution1D(self.numFilters, 2, atrous_rate=1, border_mode='valid', causal=True)(residual)
+        residual = AtrousConvolution1D(self.numFilters, 2, atrous_rate=1, border_mode='same')(residual)
         print residual
         # Convolutional layers: calculating residual blocks
         # Skip connections are used for regularization / prevent overfitting
