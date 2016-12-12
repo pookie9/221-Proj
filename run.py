@@ -4,7 +4,7 @@ from data import AudioData
 if __name__=="__main__":
     data = AudioData(sampleRate=4410,
             frameSize=2048, frameShift=128,
-            filename="piano.wav")
+            filename="orchestra.wav")
     model = WavenetModel(data)
     # model.load("model.h5")
     model.train()

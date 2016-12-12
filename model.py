@@ -102,7 +102,7 @@ class WavenetModel:
 
     # Train this model on supplied data object.
     def train(self):
-        X, y = self.data.get()
+        # X, y = self.data.get()
         print "Training on data..."
         checkpoint = ModelCheckpoint(filepath="weights.{epoch:02d}-{val_loss:.2f}.hdf5",
                 verbose=1, save_best_only=False, save_weights_only=False, mode='auto')

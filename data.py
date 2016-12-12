@@ -38,11 +38,20 @@ class AudioData(object):
         print "Finished loading audio."
 
         # normalize & quantize according to part 2.2
-        audio = audio.astype(float)
-        audio = audio - audio.min()
-        audio = audio / (audio.max() - audio.min())
-        audio = (audio - 0.5) * 2
-        audio = np.asarray([util.mulaw(a) for a in audio])
+        # this is a huge memory hog so we'll do it caraefully...
+        min_ = audio[0]
+        max_ = audio[0]
+        for i in xrange(len(audio)):
+            if audio[i] > max_:
+                max_ = audio[i]
+            if audio[i] < min_:
+                min_ = audio[i]
+
+        for i in xrange(len(audio)):
+            audio[i] = audio[i].astype(float)
+            audio[i] = audio[i] - min_
+            audio[i] = audio[i] / (max_ - min_)
+            audio[i] = (audio[i] - 0.5) * 2
         return audio
 
     def get(self):
@@ -53,8 +62,8 @@ class AudioData(object):
         targets = []
         # eye = np.eye(256)
         for i in range(0, len(audio) - self.frameSize - 1, self.frameShift):
-            slice_ = audio[i:i + self.frameSize]
-            target = audio[i + self.frameSize + 1]
+            slice_ = np.asarray([util.mulaw(a) for a in audio[i:i + self.frameSize]])
+            target = util.mulaw(audio[i + self.frameSize + 1])
             training.append(slice_.reshape(self.frameSize, 256))
             targets.append(target)# eye[target])
         self.training = np.asarray(training)
