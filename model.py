@@ -118,7 +118,6 @@ class WavenetModel:
         seed = self.data.getSeed()
         print "Generating music..."
         # Unroll samples (for some reason it's 2d array.. should probably debug)
-        samples = list([s[0] for s in seed]) 
         print samples
         i = 0
         eye = np.eye(256)

@@ -63,7 +63,7 @@ class AudioData(object):
             i = random.randint(0, len(audio) - self.frameSize - 1)
             slice_ = np.asarray([util.mulaw(a) for a in audio[i:i + self.frameSize]])
             slice_ = slice_.reshape(1, self.frameSize, 256)
-            print sum(slice_[0][0])
+            # print sum(slice_[0][0])
             target = np.asarray(util.mulaw(audio[i + self.frameSize + 1])).reshape(1, 256)
             yield slice_.reshape(1, self.frameSize, 256), target
 
