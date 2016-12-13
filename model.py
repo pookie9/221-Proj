@@ -114,17 +114,18 @@ class WavenetModel:
 
     # Generate |numSeconds| from trained model.
     def generate(self, numSeconds, filename="generated.wav"):
-        print "Generating music..."
         numSamples = numSeconds * self.data.sampleRate
         seed = self.data.getSeed()
+        print "Generating music..."
         # Unroll samples (for some reason it's 2d array.. should probably debug)
         samples = list([s[0] for s in seed]) 
         print samples
         i = 0
         eye = np.eye(256)
         while len(samples) < numSamples:
-            sys.stdout.write("\r%d/%d" % (i, numSamples))
-            sys.stdout.flush()
+            if (i%10 == 0):
+                print("\r%d/%d" % (i, numSamples))
+            # sys.stdout.flush()
             input_ = np.asarray(samples[i:i+self.frameSize]).reshape((1, self.frameSize, 1))
             result = self.model.predict(input_)
             result /= result.sum().astype(float) # normalize

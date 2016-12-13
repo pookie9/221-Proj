@@ -6,8 +6,8 @@ if __name__=="__main__":
             frameSize=2048, frameShift=128,
             filename="orchestra.wav")
     model = WavenetModel(data)
-    # model.load("model.h5")
-    model.train()
+    model.model.load_weights("weights.100.hdf5")
+    # model.train()
     model.save("model.h5")
 
     generated = model.generate(1)

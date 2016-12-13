@@ -54,22 +54,6 @@ class AudioData(object):
             audio[i] = (audio[i] - 0.5) * 2
         return audio
 
-    def get(self):
-        if self.training is not None:
-            return self.training, self.targets
-        audio = self._loadAudio()
-        training = []
-        targets = []
-        # eye = np.eye(256)
-        for i in range(0, len(audio) - self.frameSize - 1, self.frameShift):
-            slice_ = np.asarray([util.mulaw(a) for a in audio[i:i + self.frameSize]])
-            target = util.mulaw(audio[i + self.frameSize + 1])
-            training.append(slice_.reshape(self.frameSize, 256))
-            targets.append(target)# eye[target])
-        self.training = np.asarray(training)
-        self.targets = np.asarray(targets)
-        return np.asarray(training), np.asarray(targets)
-
     # Generates random samples
     def getGenerator(self):
         audio = self._loadAudio()
@@ -84,10 +68,7 @@ class AudioData(object):
             yield slice_.reshape(1, self.frameSize, 256), target
 
     def getSeed(self):
-        self.get()
-        i = random.randint(0, len(self.training)-1)
-        return self.training[i]    
-        
+        return next(self.getGenerator())[0]
 
 class AudioDataWithGlobal(AudioData):
 
