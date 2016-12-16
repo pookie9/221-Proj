@@ -31,7 +31,7 @@ class WavenetModel:
                  data,
                  numEpochs=1000,
                  numLayers=6,
-                 numFilters=16,
+                 numFilters=256,
                  filterSize=2):
                  # TODO (sydli): Calculate frame size + shift from 
                  # receptive field so we don't do unnecessary computation
@@ -41,6 +41,8 @@ class WavenetModel:
         self.numFilters = numFilters
         self.filterSize = filterSize
         self.frameSize = data.frameSize
+        self.numQuantize = data.numQuantize
+        # Construct model
         self.model = self._getKerasModel()
 
     # 2.3: Unit activation function
@@ -48,12 +50,14 @@ class WavenetModel:
         tanh = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
-                                 border_mode='same',
+                                 border_mode='valid',
+                                 causal=True,
                                  activation='tanh')(data)
         sigm = AtrousConvolution1D(self.numFilters,
                                  self.filterSize,
                                  atrous_rate=dilation,
-                                 border_mode='same',
+                                 border_mode='valid',
+                                 causal=True,
                                  activation='sigmoid')(data)
         return merge([tanh, sigm], mode='mul')
 
@@ -67,11 +71,9 @@ class WavenetModel:
     # Returns a Keras Model with appropriate convolution layers.
     # I kinda just follow what the figure looks like in Section 2.4
     def _getKerasModel(self):
-        input_ = Input(shape=(self.frameSize, 256))
+        input_ = Input(shape=(self.frameSize, self.numQuantize))
         residual = input_
-        print residual
-        residual = AtrousConvolution1D(self.numFilters, 2, atrous_rate=1, border_mode='same')(residual)
-        print residual
+        residual = AtrousConvolution1D(self.numFilters, 2, atrous_rate=1, border_mode='valid', causal=True)(residual)
         # Convolutional layers: calculating residual blocks
         # Skip connections are used for regularization / prevent overfitting
         skips = []
@@ -83,18 +85,13 @@ class WavenetModel:
         #   SUM => RELU => 1x1 CONV => RELU => 1x1 CONV => SOFTMAX
         result = Merge(mode='sum')(skips)
         result = Activation('relu')(result)
-        result = Convolution1D(1, 1, activation='relu', border_mode='same')(result)
-        result = Convolution1D(1, 1, border_mode='same')(result)
-        # result = Activation('softmax')(result)
-
-        # # I saw someone else do this to flatten the dimensionality => 256 values :D
-        # # Smart shit
-        result = Flatten()(result)
-        result = Dense(256, activation='softmax')(result)
+        result = Convolution1D(self.numQuantize, 1, activation='relu', border_mode='same')(result)
+        result = Convolution1D(self.numQuantize, 1, border_mode='same')(result)
+        result = Activation('softmax')(result)
 
         model = Model(input=input_, output=result)
         model.compile(optimizer='sgd', loss='categorical_crossentropy',
-                metrics = [metrics.mean_squared_error, metrics.categorical_accuracy])
+                metrics = [metrics.categorical_mean_squared_error, metrics.categorical_accuracy])
         model.summary()
         return model
 
@@ -102,7 +99,6 @@ class WavenetModel:
 
     # Train this model on supplied data object.
     def train(self):
-        # X, y = self.data.get()
         print "Training on data..."
         checkpoint = ModelCheckpoint(filepath="weights.{epoch:03d}.hdf5",
                 verbose=1, save_best_only=False, save_weights_only=False, mode='auto')
@@ -118,21 +114,21 @@ class WavenetModel:
         seed = self.data.getSeed()
         print "Generating music..."
         # Unroll samples (for some reason it's 2d array.. should probably debug)
+        samples = seed.reshape(self.frameSize, self.numQuantize)
         print samples
         i = 0
-        eye = np.eye(256)
         while len(samples) < numSamples:
             if (i%10 == 0):
                 print("\r%d/%d" % (i, numSamples))
             # sys.stdout.flush()
-            input_ = np.asarray(samples[i:i+self.frameSize]).reshape((1, self.frameSize, 1))
+            input_ = np.asarray(samples[i:i+self.frameSize]).reshape((1, self.frameSize, self.numQuantize))
             result = self.model.predict(input_)
             result /= result.sum().astype(float) # normalize
-            result = result.reshape(256)
-            sample = np.random.choice(range(256), p=result)
-            samples.append(eye[sample])
+            result = result.reshape(self.numQuantize)
+            sample = np.random.choice(range(self.numQuantize), p=result)
+            samples = np.append(samples, [one_hot(sample)], axis=0)
             i += 1
-        samples = [util.inverse_mulaw(s) for s in samples]
+        samples = [util.inverse_mulaw(s, self.numQuantize-1) for s in samples]
         print "Writing to wav..."
         librosa.output.write_wav(filename, np.asarray(samples), self.data.sampleRate)
         return samples

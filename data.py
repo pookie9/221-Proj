@@ -10,13 +10,17 @@ class AudioData(object):
                  sampleRate,
                  frameSize,
                  frameShift,
-                 filename=None, directory=None):
+                 filename=None, directory=None,
+                 numQuantize=256,
+                 batchSize=64):
         self.frameSize = frameSize
         self.frameShift = frameShift
         self.sampleRate = sampleRate
+        self.numQuantize = numQuantize
         self.training = None
         self.audio = []
         self.audioFiles = []
+        self.batchSize = batchSize # TODO (sydli): use this
         if directory is not None:
             self.loadDirectory(directory)
         elif filename is not None:
@@ -54,18 +58,18 @@ class AudioData(object):
             audio[i] = (audio[i] - 0.5) * 2
         return audio
 
-    # Generates random samples
+    # Generator for batches of random samples.
     def getGenerator(self):
         audio = self._loadAudio()
-        training = []
-        targets = []
+        mu = self.numQuantize
         while True:
             i = random.randint(0, len(audio) - self.frameSize - 1)
-            slice_ = np.asarray([util.mulaw(a) for a in audio[i:i + self.frameSize]])
-            slice_ = slice_.reshape(1, self.frameSize, 256)
-            # print sum(slice_[0][0])
-            target = np.asarray(util.mulaw(audio[i + self.frameSize + 1])).reshape(1, 256)
-            yield slice_.reshape(1, self.frameSize, 256), target
+            slice_ = np.asarray([util.mulaw(a, mu-1) for a in audio[i:i + self.frameSize]])
+            slice_ = slice_.reshape(1, self.frameSize, mu)
+            target_slice = np.asarray([util.mulaw(a, mu-1) for a in audio[i+1:i + self.frameSize+1]])
+            target_ = slice_.reshape(1, self.frameSize, mu)
+            # target = np.asarray(util.mulaw(audio[i + self.frameSize + 1], mu-1)).reshape(1, mu)
+            yield slice_.reshape(1, self.frameSize, mu), target_.reshape(1, self.frameSize, mu)
 
     def getSeed(self):
         return next(self.getGenerator())[0]
