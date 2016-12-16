@@ -75,7 +75,6 @@ class AudioData(object):
         return next(self.getGenerator())[0]
 
 class AudioDataWithGlobal(AudioData):
-
     def __init__(self,
                  sampleRate,
                  frameSize,
