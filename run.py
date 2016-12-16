@@ -3,12 +3,12 @@ from data import AudioData
 
 if __name__=="__main__":
     data = AudioData(sampleRate=4410,
-            frameSize=1024, frameShift=128,
-            filename="orchestra.wav")
+            frameSize=5119, frameShift=128,
+            filename="piano.wav")
     model = WavenetModel(data)
-    # model.model.load_weights("weights.100.hdf5")
+    # model.model.load_weights("weights.010.hdf5")
     model.train()
-    model.save("model.h5")
+    # model.save("model.h5")
 
     generated = model.generate(1)
     with open("generated", "w+") as f:
