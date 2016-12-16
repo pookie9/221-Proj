@@ -3,8 +3,8 @@ from data import AudioData
 
 if __name__=="__main__":
     data = AudioData(sampleRate=4410,
-            frameSize=5119, frameShift=128,
-            filename="piano.wav")
+            frameSize=1024, frameShift=441,
+            filename="flat_tone.wav")
     model = WavenetModel(data)
     # model.model.load_weights("weights.010.hdf5")
     model.train()

@@ -32,7 +32,7 @@ class WavenetModel:
     def __init__(self,
                  data,
                  numEpochs=1000,
-                 numLayers=10,
+                 numLayers=7,
                  numFilters=16,
                  filterSize=2):
                  # TODO (sydli): Calculate frame size + shift from 
@@ -80,10 +80,9 @@ class WavenetModel:
         # Convolutional layers: calculating residual blocks
         # Skip connections are used for regularization / prevent overfitting
         skips = []
-        for s in range(2):
-            for i in range(self.numLayers+1):
-                residual, skip = self._getBlock(residual, 2 ** i)
-                skips.append(skip)
+        for i in range(self.numLayers+1):
+            residual, skip = self._getBlock(residual, 2 ** i)
+	    skips.append(skip)
     
         # Skip connection output: (from figure):
         #   SUM => RELU => 1x1 CONV => RELU => 1x1 CONV => SOFTMAX
