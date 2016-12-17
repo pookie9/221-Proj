@@ -145,9 +145,19 @@ class AudioConditioned(AudioData):
             self.labels=self.labels[:self.audiodata.shape[0],:]
         else:
             self.audiodata=self.audiodata[:self.labels.shape[0],:]
-        print self.labels.shape
-        print self.audiodata.shape 
-if __name__=="__main__":
 
-    data = AudioConditioned(sampleRate=8000, frameSize=2048, frameShift=128, filename="arctic_a0001")
+    def getGenerator(self):
+        while True::
+            i=random.randint(0,self.audiodata.shape[0]-self.frameSize-1)
+            audio_train=self.audiodata[i:i+self.frameSize,:]
+            labels_train=self.labels[i:i+self.frameSize,:]
+            audio_target=self.audiodata[i,:]
+            print np.concatenate((audio_train,labels_train),axis=1).shape,audio_target.shape
+            yield np.concatenate((audio_train,labels_train),axis=1),audio_target
+
+    def getSeed(self):
+        return next(self.getGenerator())[0]
+
     
+if __name__=="__main__":
+    data = AudioConditioned(sampleRate=8000, frameSize=2048, frameShift=128, filename="arctic_a0001")
