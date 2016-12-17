@@ -123,13 +123,28 @@ class AudioCollection(AudioData):
             targets.extend(targ)
         return training, targets
 
+
+class AudioConditioned(AudioData):
+    
+    def __init__(self,sampleRate,frameSize,frameShift,filename):
+        self.frameSize=frameSize
+        self.frameShift=frameShift
+        self.sampleRate=sampleRate
+        self.training=None
+        self.audio=[]
+        self.audiodata=AudioData(sampleRate,frameSize,frameShift,filename='data/wav/'+filename+'.wav')._loadAudio()
+        self.labels=np.fromfile('data/binary_label_norm/'+filename+'.lab', dtype=np.float32, count=-1)
+        self.labels=self.labels.reshape((self.labels.shape[0]/425,425))
+        self.audiodata=np.reshape(self.audiodata,(self.audiodata.shape[0],1))
+        samples_per_frame=self.audiodata.shape[0]/self.labels.shape[0]
+        self.labels=np.repeat(self.labels,samples_per_frame,0)
+        #Should be pretty close to each other, so now just trim to be exact length
+        if self.labels.shape[0]>self.audiodata.shape[0]:
+            self.labels=self.labels[:self.audiodata.shape[0],:]
+        else:
+            self.audiodata=self.audiodata[:self.labels.shape[0],:]
+        print self.labels.shape
+        print self.audiodata.shape 
 if __name__=="__main__":
-#    data = AudioData(sampleRate=8000, frameSize=2048, frameShift=128, filename="piano.wav")
-#    X, y = data.get()
-    data = AudioCollection(8000, 2048, 128, ["piano.wav","orchestra.wav"],[1,0])
-    X,y=data.get()
-    print len(X)
-    print X[0].shape
-    print y[0].shape
-    print len(y)
+    data = AudioConditioned(sampleRate=8000, frameSize=2048, frameShift=128, filename="arctic_a0001")
     
